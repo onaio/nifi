@@ -160,6 +160,7 @@ public class OAuthHTTPConnectionClient
                 Map<String, List<String>> responseHeaders, String accessTokenName, String tokenTypeName, String scopeName,
                 String expireInName, String expireTimeName) throws OAuthProblemException {
 
+            // TODO: why duplicate initialization?
             setResponseCode(responseCode);
             this.responseCode = responseCode;
             setContentType(contentType);
