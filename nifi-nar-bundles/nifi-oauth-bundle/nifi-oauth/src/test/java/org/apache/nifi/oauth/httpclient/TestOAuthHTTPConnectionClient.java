@@ -17,9 +17,110 @@
 
 package org.apache.nifi.oauth.httpclient;
 
+import org.apache.nifi.oauth.OAuth2TestBase;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.json.JSONObject;
+import org.junit.*;
 
-public class TestOAuthHTTPConnectionClient {
-    public void testCustomOAuthAccessTokenResponse() {
-        // TODO: Test IOException
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+
+public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
+    private static final JSONObject AUTH_RESPONSE;
+    private static final String FIELD_ACCESS_TOKEN = "access_token";
+    private static final String FIELD_TOKEN_TYPE = "token_type";
+    private static final String FIELD_EXPIRE_TIME = "expire_time";
+    private static final String FIELD_EXPIRE_IN = "expires_in";
+    private static final String FIELD_SCOPE = "scope";
+
+    static {
+        AUTH_RESPONSE = new JSONObject();
+        AUTH_RESPONSE.put(FIELD_ACCESS_TOKEN, "4324ewewr");
+        AUTH_RESPONSE.put(FIELD_TOKEN_TYPE, "some type");
+        AUTH_RESPONSE.put(FIELD_EXPIRE_TIME, "2081-01-04T09:09:09+0300");
+        AUTH_RESPONSE.put(FIELD_EXPIRE_IN, 324234323342l);
+        AUTH_RESPONSE.put(FIELD_SCOPE, "some scope");
+    }
+
+    @BeforeClass
+    public static void initServer() throws Exception {
+        // initialize the handlers
+        List<ServletHandler> secureHandlers = new ArrayList<>();
+        ServletHandler testHttpsRequest = new ServletHandler();
+        testHttpsRequest.addServletWithMapping(OAuth2AuthServlet.class, "/testHttpsRequest");
+        secureHandlers.add(testHttpsRequest);
+
+        OAuth2TestBase.initServer(secureHandlers, null);
+    }
+
+    @Test
+    public void testNonHttpsRequest() throws Exception {
+        OAuthClientRequest.TokenRequestBuilder authTokenRequest =
+                new OAuthClientRequest.TokenRequestBuilder(unsecureServer.getUrl())
+                        .setClientId("")
+                        .setClientSecret("")
+                        .setGrantType(GrantType.CLIENT_CREDENTIALS);
+
+        OAuthClientRequest headerRequest = authTokenRequest.buildHeaderMessage();
+        headerRequest.setHeader("Cache-Control", "no-cache");
+        headerRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        headerRequest.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString("".getBytes()));
+        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(null, null, null, null, null);
+        try {
+            conn.execute(headerRequest, null, "POST", OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+            Assert.fail("OAuthSystemException meant to be thrown if non-HTTPS request made");
+        } catch (OAuthSystemException e) {}
+    }
+
+    @Test
+    public void testHttpsRequest() throws OAuthSystemException, OAuthProblemException {
+        setDefaultSSLSocketFactory();
+
+        String fakeClientId = "fdsafdsfds";
+        String fakeClientSecret = "423432ewr";
+        OAuthClientRequest.TokenRequestBuilder authTokenRequest =
+                new OAuthClientRequest.TokenRequestBuilder(secureServer.getSecureUrl() + "/testHttpsRequest")
+                        .setClientId(fakeClientId)
+                        .setClientSecret(fakeClientSecret)
+                        .setGrantType(GrantType.CLIENT_CREDENTIALS);
+        OAuthClientRequest headerRequest = authTokenRequest.buildHeaderMessage();
+        headerRequest.setHeader("Cache-Control", "no-cache");
+        headerRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        headerRequest.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
+        headerRequest.setBody("grant_type=client_credentials");
+
+
+        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(FIELD_ACCESS_TOKEN, FIELD_TOKEN_TYPE, FIELD_SCOPE, FIELD_EXPIRE_IN, FIELD_EXPIRE_TIME);
+        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse authResp = conn.execute(headerRequest, null, "POST", OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+        if (authResp != null) {
+            Assert.assertEquals(authResp.getAccessToken(), AUTH_RESPONSE.getString(FIELD_ACCESS_TOKEN));
+            Assert.assertEquals(authResp.getScope(), AUTH_RESPONSE.getString(FIELD_SCOPE));
+            Assert.assertEquals(authResp.getExpiresIn(), new Long(AUTH_RESPONSE.getLong(FIELD_EXPIRE_IN)));
+            Assert.assertEquals(authResp.getTokenType(), AUTH_RESPONSE.getString(FIELD_TOKEN_TYPE));
+        } else {
+            Assert.fail("Received a null response from OAuth2 authentication service");
+        }
+    }
+
+    private static class OAuth2AuthServlet extends HttpServlet {
+
+        private static final long serialVersionUID = 8402271118449653929L;
+
+        @Override
+        protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+            response.setStatus(Response.Status.OK.getStatusCode());
+            response.setContentType("application/json");
+            response.getWriter().println(AUTH_RESPONSE.toString());
+        }
     }
 }

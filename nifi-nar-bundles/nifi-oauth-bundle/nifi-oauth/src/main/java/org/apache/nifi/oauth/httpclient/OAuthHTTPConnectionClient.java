@@ -42,6 +42,8 @@ import org.apache.oltu.oauth2.common.token.OAuthToken;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.json.JSONObject;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class OAuthHTTPConnectionClient
     implements HttpClient {
 
@@ -74,8 +76,8 @@ public class OAuthHTTPConnectionClient
 
                 c = url.openConnection();
                 responseCode = -1;
-                if (c instanceof HttpURLConnection) {
-                    HttpURLConnection httpURLConnection = (HttpURLConnection) c;
+                if (c instanceof HttpsURLConnection) {
+                    HttpsURLConnection httpURLConnection = (HttpsURLConnection) c;
 
                     if (headers != null && !headers.isEmpty()) {
                         for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -123,7 +125,7 @@ public class OAuthHTTPConnectionClient
         return (T) cr;
     }
 
-    private void setRequestBody(OAuthClientRequest request, String requestMethod, HttpURLConnection httpURLConnection)
+    private void setRequestBody(OAuthClientRequest request, String requestMethod, HttpsURLConnection httpURLConnection)
             throws IOException {
         String requestBody = request.getBody();
         if (OAuthUtils.isEmpty(requestBody)) {

@@ -69,10 +69,6 @@ public class TestOAuth2ClientCredentialsGrantControllerService {
         }
     }
 
-    public void testHttpsValidator() {
-        
-    }
-
     public void testAuthenticate() {
 
     }
