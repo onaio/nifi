@@ -72,12 +72,19 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         headerRequest.setHeader("Cache-Control", "no-cache");
         headerRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
         headerRequest.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString("".getBytes()));
-        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(null, null, null, null, null);
+
+        OAuthHTTPConnectionClient conn = null;
         try {
-            conn.execute(headerRequest, null, "POST",
-                    OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
-            Assert.fail("OAuthSystemException meant to be thrown if non-HTTPS request made");
-        } catch (OAuthSystemException e) {}
+            conn = new OAuthHTTPConnectionClient(null, null, null, null, null);
+            try {
+                conn.execute(headerRequest, null, "POST",
+                        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+                Assert.fail("OAuthSystemException meant to be thrown if non-HTTPS request made");
+            } catch (OAuthSystemException e) {
+            }
+        } finally {
+            if (conn != null) conn.shutdown();
+        }
     }
 
     @Test
@@ -99,24 +106,29 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         headerRequest.setBody("grant_type=client_credentials");
 
 
-        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(
-                FIELD_ACCESS_TOKEN,
-                FIELD_TOKEN_TYPE,
-                FIELD_SCOPE,
-                FIELD_EXPIRE_IN,
-                FIELD_EXPIRE_TIME);
-        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse authResp = conn.execute(
-                headerRequest,
-                null,
-                "POST",
-                OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
-        if (authResp != null) {
-            Assert.assertEquals(authResp.getAccessToken(), AUTH_RESPONSE.getString(FIELD_ACCESS_TOKEN));
-            Assert.assertEquals(authResp.getScope(), AUTH_RESPONSE.getString(FIELD_SCOPE));
-            Assert.assertEquals(authResp.getExpiresIn(), new Long(AUTH_RESPONSE.getLong(FIELD_EXPIRE_IN)));
-            Assert.assertEquals(authResp.getTokenType(), AUTH_RESPONSE.getString(FIELD_TOKEN_TYPE));
-        } else {
-            Assert.fail("Received a null response from OAuth2 authentication service");
+        OAuthHTTPConnectionClient conn = null;
+        try {
+            conn = new OAuthHTTPConnectionClient(
+                    FIELD_ACCESS_TOKEN,
+                    FIELD_TOKEN_TYPE,
+                    FIELD_SCOPE,
+                    FIELD_EXPIRE_IN,
+                    FIELD_EXPIRE_TIME);
+            OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse authResp = conn.execute(
+                    headerRequest,
+                    null,
+                    "POST",
+                    OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+            if (authResp != null) {
+                Assert.assertEquals(authResp.getAccessToken(), AUTH_RESPONSE.getString(FIELD_ACCESS_TOKEN));
+                Assert.assertEquals(authResp.getScope(), AUTH_RESPONSE.getString(FIELD_SCOPE));
+                Assert.assertEquals(authResp.getExpiresIn(), new Long(AUTH_RESPONSE.getLong(FIELD_EXPIRE_IN)));
+                Assert.assertEquals(authResp.getTokenType(), AUTH_RESPONSE.getString(FIELD_TOKEN_TYPE));
+            } else {
+                Assert.fail("Received a null response from OAuth2 authentication service");
+            }
+        } finally {
+            if (conn != null) conn.shutdown();
         }
     }
 
@@ -138,22 +150,27 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
                 "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
         headerRequest.setBody("grant_type=client_credentials");
 
-
-        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(
-                FIELD_ACCESS_TOKEN,
-                FIELD_TOKEN_TYPE,
-                FIELD_SCOPE,
-                FIELD_EXPIRE_IN,
-                FIELD_EXPIRE_TIME);
-
+        OAuthHTTPConnectionClient conn = null;
         try {
-            conn.execute(
-                    headerRequest,
-                    null,
-                    "POST",
-                    OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
-            Assert.fail("OAuthSystemException should be thrown if OAuth authentication service is broken");
-        } catch (OAuthSystemException e) {}
+            conn = new OAuthHTTPConnectionClient(
+                    FIELD_ACCESS_TOKEN,
+                    FIELD_TOKEN_TYPE,
+                    FIELD_SCOPE,
+                    FIELD_EXPIRE_IN,
+                    FIELD_EXPIRE_TIME);
+
+            try {
+                conn.execute(
+                        headerRequest,
+                        null,
+                        "POST",
+                        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+                Assert.fail("OAuthSystemException should be thrown if OAuth authentication service is broken");
+            } catch (OAuthSystemException e) {
+            }
+        } finally {
+            if (conn != null) conn.shutdown();
+        }
     }
 
     public static class TestHttpsRequestServlet extends HttpServlet {
