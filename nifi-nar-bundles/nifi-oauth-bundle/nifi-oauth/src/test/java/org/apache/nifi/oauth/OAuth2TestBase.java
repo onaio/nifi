@@ -16,7 +16,6 @@ import org.junit.Before;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class OAuth2TestBase {
@@ -26,25 +25,20 @@ public class OAuth2TestBase {
 
     private TestRunner runner;
 
-    public static void initServer(List<ServletHandler> secureHandlers,
-                                  List<ServletHandler> unsecureHandlers) throws Exception {
+    public static void initServer(ServletHandler secureHandler, ServletHandler unsecureHandler) throws Exception {
         // create the secure server
         secureServer = new TestServer(createSSLProperties());
         secureServer.clearHandlers();
-        if (secureHandlers != null) {
-            for (ServletHandler curHandler : secureHandlers) {
-                secureServer.addHandler(curHandler);
-            }
+        if (secureHandler != null) {
+            secureServer.addHandler(secureHandler);
         }
         secureServer.startServer();
 
         // create the non-secure server
         unsecureServer = new TestServer();
         unsecureServer.clearHandlers();
-        if (unsecureHandlers != null) {
-            for (ServletHandler curHandler : unsecureHandlers) {
-                unsecureServer.addHandler(curHandler);
-            }
+        if (unsecureHandler != null) {
+            unsecureServer.addHandler(unsecureHandler);
         }
         unsecureServer.startServer();
 

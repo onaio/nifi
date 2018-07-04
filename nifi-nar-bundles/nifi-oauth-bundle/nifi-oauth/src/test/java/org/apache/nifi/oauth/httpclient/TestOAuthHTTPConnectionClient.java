@@ -31,9 +31,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.List;
 
 public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
     private static final JSONObject AUTH_RESPONSE;
@@ -55,12 +53,11 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
     @BeforeClass
     public static void initServer() throws Exception {
         // initialize the handlers
-        List<ServletHandler> secureHandlers = new ArrayList<>();
-        ServletHandler testHttpsRequest = new ServletHandler();
-        testHttpsRequest.addServletWithMapping(OAuth2AuthServlet.class, "/testHttpsRequest");
-        secureHandlers.add(testHttpsRequest);
+        ServletHandler secureServerHandler = new ServletHandler();
+        secureServerHandler.addServletWithMapping(TestHttpsRequestServlet.class, "/testHttpsRequest");
+        secureServerHandler.addServletWithMapping(TestOAuthExceptionIfServerErrorServlet.class, "/testOAuthExceptionIfServerError");
 
-        OAuth2TestBase.initServer(secureHandlers, null);
+        OAuth2TestBase.initServer(secureServerHandler, null);
     }
 
     @Test
@@ -123,7 +120,43 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         }
     }
 
-    public static class OAuth2AuthServlet extends HttpServlet {
+    @Test
+    public void testOAuthExceptionIfServerError() throws OAuthProblemException, OAuthSystemException {
+        setDefaultSSLSocketFactory();
+
+        String fakeClientId = "fdsafdsfds";
+        String fakeClientSecret = "423432ewr";
+        OAuthClientRequest.TokenRequestBuilder authTokenRequest =
+                new OAuthClientRequest.TokenRequestBuilder(secureServer.getSecureUrl() + "/testOAuthExceptionIfServerError")
+                        .setClientId(fakeClientId)
+                        .setClientSecret(fakeClientSecret)
+                        .setGrantType(GrantType.CLIENT_CREDENTIALS);
+        OAuthClientRequest headerRequest = authTokenRequest.buildHeaderMessage();
+        headerRequest.setHeader("Cache-Control", "no-cache");
+        headerRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
+        headerRequest.setHeader("Authorization",
+                "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
+        headerRequest.setBody("grant_type=client_credentials");
+
+
+        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(
+                FIELD_ACCESS_TOKEN,
+                FIELD_TOKEN_TYPE,
+                FIELD_SCOPE,
+                FIELD_EXPIRE_IN,
+                FIELD_EXPIRE_TIME);
+
+        try {
+            conn.execute(
+                    headerRequest,
+                    null,
+                    "POST",
+                    OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+            Assert.fail("OAuthSystemException should be thrown if OAuth authentication service is broken");
+        } catch (OAuthSystemException e) {}
+    }
+
+    public static class TestHttpsRequestServlet extends HttpServlet {
 
         private static final long serialVersionUID = 132432433242L;
 
@@ -134,5 +167,14 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
             response.getWriter().println(AUTH_RESPONSE);
             response.getWriter().flush();
         }
+    }
+
+    public static class TestOAuthExceptionIfServerErrorServlet extends HttpServlet {
+        private static final long serialVersionUID = 132432454356242L;
+        @Override
+        protected void doPost(final HttpServletRequest request, final HttpServletResponse response) {
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+        }
+
     }
 }
