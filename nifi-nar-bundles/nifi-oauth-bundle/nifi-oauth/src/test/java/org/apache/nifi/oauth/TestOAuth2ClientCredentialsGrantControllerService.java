@@ -16,68 +16,90 @@
  */
 package org.apache.nifi.oauth;
 
-import org.junit.Ignore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.apache.nifi.processor.AbstractProcessor;
-import org.apache.nifi.processor.ProcessContext;
-import org.apache.nifi.processor.ProcessSession;
-import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.reporting.InitializationException;
-import org.apache.nifi.util.TestRunner;
-import org.apache.nifi.util.TestRunners;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
+import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.servlet.ServletHandler;
+import org.json.JSONObject;
+import org.junit.*;
+
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 
-public class TestOAuth2ClientCredentialsGrantControllerService {
-    private static final String SERVICE_ID = "OAuth2ClientCredentialsGrant";
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestOAuth2ClientCredentialsGrantControllerService.class);
-    private TestRunner testRunner;
+public class TestOAuth2ClientCredentialsGrantControllerService extends OAuth2TestBase {
+    private static final JSONObject VALID_AUTH_RESPONSE;
+    private static final String FIELD_ACCESS_TOKEN = "access_token";
+    private static final String FIELD_TOKEN_TYPE = "token_type";
+    private static final String FIELD_EXPIRE_TIME = "expire_time";
+    private static final String FIELD_EXPIRE_IN = "expires_in";
+    private static final String FIELD_SCOPE = "scope";
+    private static final String VALUE_CLIENT_ID = "3432432ewr";
+    private static final String VALUE_CLIENT_SECRET = "fkdsajflkdsjfkdsjf";
 
-    public static class SampleProcessor extends AbstractProcessor {
-        @Override
-        public void onTrigger(ProcessContext context, ProcessSession session) throws ProcessException {
-
-        }
+    static {
+        VALID_AUTH_RESPONSE = new JSONObject();
+        VALID_AUTH_RESPONSE.put(FIELD_ACCESS_TOKEN, "4324ewewr");
+        VALID_AUTH_RESPONSE.put(FIELD_TOKEN_TYPE, "24324378l");
+        VALID_AUTH_RESPONSE.put(FIELD_EXPIRE_TIME, 4323243423l);
+        VALID_AUTH_RESPONSE.put(FIELD_EXPIRE_IN, 324234323342l);
+        VALID_AUTH_RESPONSE.put(FIELD_SCOPE, "some scope");
     }
 
-    @Before
-    public void init() throws Exception {
-        testRunner = TestRunners.newTestRunner(SampleProcessor.class);
+    @BeforeClass
+    public static void initServer() throws Exception {
+        // initialize the handlers
+        ServletHandler secureServerHandler = new ServletHandler();
+        secureServerHandler.addServletWithMapping(TestAuthenticateServlet.class, "/testAuthenticate");
+
+        OAuth2TestBase.initServer(secureServerHandler, null);
     }
 
     @Test
     @Ignore
-    public void testOnEnabled() throws InitializationException {
-        OAuth2ClientCredentialsGrantControllerService service = new OAuth2ClientCredentialsGrantControllerService();
-        testRunner.addControllerService(SERVICE_ID, service);
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.AUTH_SERVER_URL, "https://api.twitter.com/oauth2/token");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.CLIENT_ID, "dsfds");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.CLIENT_SECRET, "fdsfds");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.RESPONSE_ACCESS_TOKEN_FIELD_NAME, "access_token");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.RESPONSE_EXPIRE_IN_FIELD_NAME, "expire_in");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.RESPONSE_EXPIRE_TIME_FIELD_NAME, "expire_time");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.RESPONSE_SCOPE_FIELD_NAME, "scope");
-        testRunner.setProperty(service, OAuth2ClientCredentialsGrantControllerService.RESPONSE_TOKEN_TYPE_FIELD_NAME, "token_type");
-        try {
-            testRunner.enableControllerService(service);
-        } catch (AssertionError e) {
-            Assert.fail(e.getMessage());
+    public void testAuthenticate() throws InitializationException {
+        setDefaultSSLSocketFactory();
+
+        OAuth2ClientCredentialsGrantControllerService testAuthenticateService =
+                new OAuth2ClientCredentialsGrantControllerService();
+        runner.addControllerService("testAuthenticate", testAuthenticateService);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.AUTH_SERVER_URL,
+                secureServer.getSecureUrl() + "/testAuthenticate");
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.CLIENT_ID, VALUE_CLIENT_ID);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.CLIENT_SECRET, VALUE_CLIENT_SECRET);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.RESPONSE_ACCESS_TOKEN_FIELD_NAME, FIELD_ACCESS_TOKEN);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.RESPONSE_EXPIRE_IN_FIELD_NAME, FIELD_EXPIRE_IN);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.RESPONSE_EXPIRE_TIME_FIELD_NAME, FIELD_EXPIRE_TIME);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.RESPONSE_SCOPE_FIELD_NAME, FIELD_SCOPE);
+        runner.setProperty(testAuthenticateService,
+                OAuth2ClientCredentialsGrantControllerService.RESPONSE_TOKEN_TYPE_FIELD_NAME, FIELD_TOKEN_TYPE);
+        runner.enableControllerService(testAuthenticateService);
+
+        Assert.assertTrue(testAuthenticateService.authenticate());
+    }
+
+    public static class TestAuthenticateServlet extends HttpServlet {
+
+        private static final long serialVersionUID = 1324324343223772L;
+
+        @Override
+        protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+            response.setStatus(HttpStatus.OK_200);
+            response.setContentType("application/json");
+            response.getWriter().println(VALID_AUTH_RESPONSE);
+            response.getWriter().flush();
         }
     }
 
-    public void testAuthenticate() {
 
-    }
-
-    public void testIsOAuthTokenExpired() {
-
-    }
-
-    public void testPropertyFields() {
-
-    }
 }
