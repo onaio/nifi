@@ -77,7 +77,8 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         headerRequest.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString("".getBytes()));
         OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(null, null, null, null, null);
         try {
-            conn.execute(headerRequest, null, "POST", OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+            conn.execute(headerRequest, null, "POST",
+                    OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
             Assert.fail("OAuthSystemException meant to be thrown if non-HTTPS request made");
         } catch (OAuthSystemException e) {}
     }
@@ -96,12 +97,22 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         OAuthClientRequest headerRequest = authTokenRequest.buildHeaderMessage();
         headerRequest.setHeader("Cache-Control", "no-cache");
         headerRequest.setHeader("Content-Type", "application/x-www-form-urlencoded");
-        headerRequest.setHeader("Authorization", "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
+        headerRequest.setHeader("Authorization",
+                "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
         headerRequest.setBody("grant_type=client_credentials");
 
 
-        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(FIELD_ACCESS_TOKEN, FIELD_TOKEN_TYPE, FIELD_SCOPE, FIELD_EXPIRE_IN, FIELD_EXPIRE_TIME);
-        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse authResp = conn.execute(headerRequest, null, "POST", OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
+        OAuthHTTPConnectionClient conn = new OAuthHTTPConnectionClient(
+                FIELD_ACCESS_TOKEN,
+                FIELD_TOKEN_TYPE,
+                FIELD_SCOPE,
+                FIELD_EXPIRE_IN,
+                FIELD_EXPIRE_TIME);
+        OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse authResp = conn.execute(
+                headerRequest,
+                null,
+                "POST",
+                OAuthHTTPConnectionClient.CustomOAuthAccessTokenResponse.class);
         if (authResp != null) {
             Assert.assertEquals(authResp.getAccessToken(), AUTH_RESPONSE.getString(FIELD_ACCESS_TOKEN));
             Assert.assertEquals(authResp.getScope(), AUTH_RESPONSE.getString(FIELD_SCOPE));

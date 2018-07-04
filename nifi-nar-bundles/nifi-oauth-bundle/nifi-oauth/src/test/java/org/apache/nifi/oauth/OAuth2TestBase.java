@@ -75,9 +75,12 @@ public class OAuth2TestBase {
         return map;
     }
 
-    protected void setDefaultSSLSocketFactory(TestRunner runner, String sslContextServiceId, SSLContextService.ClientAuth clientAuth) {
-        StandardSSLContextService sslContextService = (StandardSSLContextService) runner.getControllerService(sslContextServiceId);
-        HttpsURLConnection.setDefaultSSLSocketFactory(sslContextService.createSSLContext(clientAuth).getSocketFactory());
+    protected void setDefaultSSLSocketFactory(TestRunner runner, String sslContextServiceId,
+                                              SSLContextService.ClientAuth clientAuth) {
+        StandardSSLContextService sslContextService =
+                (StandardSSLContextService) runner.getControllerService(sslContextServiceId);
+        HttpsURLConnection
+                .setDefaultSSLSocketFactory(sslContextService.createSSLContext(clientAuth).getSocketFactory());
     }
 
     protected void setDefaultSSLSocketFactory() {
