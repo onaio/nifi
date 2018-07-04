@@ -22,6 +22,7 @@ import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.json.JSONObject;
 import org.junit.*;
@@ -29,7 +30,6 @@ import org.junit.*;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -47,7 +47,7 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         AUTH_RESPONSE = new JSONObject();
         AUTH_RESPONSE.put(FIELD_ACCESS_TOKEN, "4324ewewr");
         AUTH_RESPONSE.put(FIELD_TOKEN_TYPE, "some type");
-        AUTH_RESPONSE.put(FIELD_EXPIRE_TIME, "2081-01-04T09:09:09+0300");
+        AUTH_RESPONSE.put(FIELD_EXPIRE_TIME, 4323243423l);
         AUTH_RESPONSE.put(FIELD_EXPIRE_IN, 324234323342l);
         AUTH_RESPONSE.put(FIELD_SCOPE, "some scope");
     }
@@ -112,15 +112,16 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         }
     }
 
-    private static class OAuth2AuthServlet extends HttpServlet {
+    public static class OAuth2AuthServlet extends HttpServlet {
 
-        private static final long serialVersionUID = 8402271118449653929L;
+        private static final long serialVersionUID = 132432433242L;
 
         @Override
         protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-            response.setStatus(Response.Status.OK.getStatusCode());
+            response.setStatus(HttpStatus.OK_200);
             response.setContentType("application/json");
-            response.getWriter().println(AUTH_RESPONSE.toString());
+            response.getWriter().println(AUTH_RESPONSE);
+            response.getWriter().flush();
         }
     }
 }
