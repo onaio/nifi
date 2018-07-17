@@ -29,7 +29,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-
 public class TestOAuth2ClientCredentialsGrantControllerService extends OAuth2TestBase {
     private static final JSONObject VALID_AUTH_RESPONSE;
     private static final String FIELD_ACCESS_TOKEN = "access_token";
@@ -60,7 +59,7 @@ public class TestOAuth2ClientCredentialsGrantControllerService extends OAuth2Tes
 
     @Test
     @Ignore
-    public void testAuthenticate() throws InitializationException {
+    public void testAuthenticate() {
         setDefaultSSLSocketFactory();
 
         OAuth2ClientCredentialsGrantControllerService testAuthenticateService =
@@ -85,6 +84,7 @@ public class TestOAuth2ClientCredentialsGrantControllerService extends OAuth2Tes
                 OAuth2ClientCredentialsGrantControllerService.RESPONSE_TOKEN_TYPE_FIELD_NAME, FIELD_TOKEN_TYPE);
         runner.enableControllerService(testAuthenticateService);
 
+	OAuth2ClientCredentialsGrantControllerService testAuthenticateService = (OAuth2ClientCredentialsGrantControllerService) runner.getControllerService("testAuthenticate");
         Assert.assertTrue(testAuthenticateService.authenticate());
     }
 
@@ -100,6 +100,4 @@ public class TestOAuth2ClientCredentialsGrantControllerService extends OAuth2Tes
             response.getWriter().flush();
         }
     }
-
-
 }

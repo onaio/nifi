@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.nifi.oauth.httpclient;
 
 import org.apache.nifi.oauth.OAuth2TestBase;
@@ -105,7 +104,6 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
                 "Basic " + Base64.getEncoder().encodeToString((fakeClientId + ":" + fakeClientSecret).getBytes()));
         headerRequest.setBody("grant_type=client_credentials");
 
-
         OAuthHTTPConnectionClient conn = null;
         try {
             conn = new OAuthHTTPConnectionClient(
@@ -192,6 +190,5 @@ public class TestOAuthHTTPConnectionClient extends OAuth2TestBase {
         protected void doPost(final HttpServletRequest request, final HttpServletResponse response) {
             response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
         }
-
     }
 }
