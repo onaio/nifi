@@ -25,7 +25,7 @@ if [ -n "$2" ]; then
   DOCKER_GID="$2"
 fi
 
-MIRROR=https://archive.apache.org/dist
+MIRROR=https://s3-eu-west-1.amazonaws.com/ona-bdw/nifi/binaries
 if [ -n "$3" ]; then
   MIRROR="$3"
 fi

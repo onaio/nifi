@@ -27,7 +27,7 @@ ARG MIRROR=https://archive.apache.org/dist
 
 ENV NIFI_BASE_DIR /opt/nifi
 ENV NIFI_HOME=${NIFI_BASE_DIR}/nifi-${NIFI_VERSION} \
-    NIFI_BINARY_URL=/nifi/${NIFI_VERSION}/nifi-${NIFI_VERSION}-bin.tar.gz
+    NIFI_BINARY_URL=nifi/${NIFI_VERSION}/nifi-${NIFI_VERSION}-bin.tar.gz
 ENV NIFI_PID_DIR=${NIFI_HOME}/run
 ENV NIFI_LOG_DIR=${NIFI_HOME}/logs
 
@@ -50,7 +50,7 @@ USER nifi
 
 # Download, validate, and expand Apache NiFi binary.
 RUN curl -fSL ${MIRROR}/${NIFI_BINARY_URL} -o ${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.tar.gz \
-    && echo "$(curl https://archive.apache.org/dist/${NIFI_BINARY_URL}.sha256) *${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.tar.gz" | sha256sum -c - \
+    && echo "$(curl ${MIRROR}/${NIFI_BINARY_URL}.sha256) *${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.tar.gz" | sha256sum -c - \
     && tar -xvzf ${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.tar.gz -C ${NIFI_BASE_DIR} \
     && rm ${NIFI_BASE_DIR}/nifi-${NIFI_VERSION}-bin.tar.gz
 
